@@ -362,7 +362,8 @@ export default function ClientNotifications() {
             </div>
           </div>
           <div className="border-t border-white/20 mt-8 pt-8 text-center">
-            <p className="text-white/70 text-sm">© 2024 KW Chief Media. All rights reserved.</p>
+            <p className="text-white/70 text-sm">Chief Media ® is a part of KW Singapore Real Estate Pte. Ltd.</p>
+            <p className="text-white/70 text-sm">Copyright © 2025 KW Singapore Official Gig Economy Vendor</p>
           </div>
         </div>
       </footer>

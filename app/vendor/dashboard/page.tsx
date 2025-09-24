@@ -304,7 +304,7 @@ export default function VendorDashboard() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Social%20Media-AMMTZS4OnQoBwb9d4BRrcy7CcnpKQT.png"
+                  src="/chiefmedia.png"
                   alt="Chief Media Logo"
                   className="h-20 w-auto"
                 />
@@ -404,7 +404,8 @@ export default function VendorDashboard() {
           </div>
 
           <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-            <p>&copy; 2024 KW Chief Media. All rights reserved.</p>
+            <p>Chief Media ® is a part of KW Singapore Real Estate Pte. Ltd.</p>
+            <p>Copyright © 2025 KW Singapore Official Gig Economy Vendor</p>
           </div>
         </div>
       </footer>
