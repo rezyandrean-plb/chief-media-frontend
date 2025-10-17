@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
+import toast from "react-hot-toast"
 
 interface User {
   id: string
@@ -37,20 +38,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = () => {
       try {
-        if (typeof window !== "undefined") {
-          const savedUser = localStorage.getItem("kw-chief-media-user")
+        // 1) Immediately hydrate from localStorage for instant UI responsiveness
+        if (typeof window !== 'undefined') {
+          const savedUser = localStorage.getItem('kw-chief-media-user')
           if (savedUser) {
-            const parsedUser = JSON.parse(savedUser)
-            setUser(parsedUser)
+            try {
+              const parsedUser = JSON.parse(savedUser)
+              setUser(parsedUser)
+            } catch {}
           }
         }
+        setIsLoading(false)
+
+        // 2) Reconcile in background with server session (JWT cookie)
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 2000)
+        fetch('/api/auth/me', { method: 'GET', signal: controller.signal })
+          .then(async (res) => {
+            if (!res.ok) return
+            const { data } = await res.json()
+            const apiUser: User = {
+              id: String(data.id),
+              email: data.email,
+              name: data.name,
+              role: data.role,
+              avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
+            }
+            setUser(apiUser)
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('kw-chief-media-user', JSON.stringify(apiUser))
+            }
+          })
+          .catch(() => {
+            // ignore background errors
+          })
+          .finally(() => clearTimeout(timeout))
+        return
       } catch (error) {
         console.error("Error loading saved user:", error)
         if (typeof window !== "undefined") {
           localStorage.removeItem("kw-chief-media-user")
         }
       } finally {
-        setIsLoading(false)
+        // no-op
       }
     }
 
@@ -71,47 +101,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, isMounted])
 
-  const login = async (email: string, password: string, role = "client"): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      // Mock user data based on email and role
-      const mockUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        name: email
-          .split("@")[0]
-          .replace(/[._]/g, " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase()),
-        role: role as "client" | "vendor" | "organization" | "realtor",
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      if (!res.ok) {
+        let message = 'Invalid credentials'
+        try {
+          const data = await res.json()
+          if (data?.error) message = data.error
+        } catch {}
+        toast.error(message)
+        return false
       }
-
-      // Add organization data for organization accounts
-      if (role === "organization") {
-        mockUser.organizationId = "org_" + Math.random().toString(36).substr(2, 9)
-        mockUser.organizationName = mockUser.name + " Organization"
+      const { data } = await res.json()
+      const apiUser: User = {
+        id: String(data.id),
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
       }
-
-      setUser(mockUser)
+      setUser(apiUser)
       return true
     } catch (error) {
-      console.error("Login error:", error)
+      console.error('Login error:', error)
+      toast.error('Unable to login. Please try again.')
       return false
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    if (isMounted && typeof window !== "undefined") {
-      try {
-        localStorage.removeItem("kw-chief-media-user")
-      } catch (error) {
-        console.error("Error removing from localStorage:", error)
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch (e) {
+      // ignore network errors on logout
+    } finally {
+      setUser(null)
+      if (isMounted && typeof window !== "undefined") {
+        try {
+          localStorage.removeItem("kw-chief-media-user")
+        } catch (error) {
+          console.error("Error removing from localStorage:", error)
+        }
       }
     }
   }

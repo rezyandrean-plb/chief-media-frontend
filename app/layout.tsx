@@ -3,7 +3,8 @@ import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import { GeistMono } from "geist/font/mono"
 import { AuthProvider } from "@/contexts/auth-context"
-import Header from "@/components/Header"
+import ConditionalLayout from "@/components/ConditionalLayout"
+import { Toaster } from "react-hot-toast"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -28,8 +29,33 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans ${poppins.variable} ${GeistMono.variable} antialiased`}>
         <AuthProvider>
-          <Header />
-          {children}
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
+          <Toaster 
+            position="bottom-right"
+            toastOptions={{
+              duration: 5000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+              success: {
+                duration: 5000,
+                style: {
+                  background: '#10B981',
+                  color: '#fff',
+                },
+              },
+              error: {
+                duration: 5000,
+                style: {
+                  background: '#EF4444',
+                  color: '#fff',
+                },
+              },
+            }}
+          />
         </AuthProvider>
       </body>
     </html>

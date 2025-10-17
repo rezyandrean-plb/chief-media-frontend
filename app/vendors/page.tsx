@@ -6,9 +6,61 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Star, MapPin, Phone, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Image from "next/image"
 
-const vendors = [
+interface Vendor {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  specialty?: string;
+  rating?: number;
+  reviews?: number;
+  location?: string;
+  image?: string;
+  profileImage?: string;
+  services?: string[];
+  priceRange?: string;
+  description?: string;
+  status?: string;
+  company?: string;
+  address?: string;
+  website?: string;
+}
+
+export default function VendorsPage() {
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSpecialty, setSelectedSpecialty] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const vendorsPerPage = 6;
+
+  // Fetch vendors from database
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/vendors');
+        if (response.ok) {
+          const result = await response.json();
+          setVendors(result.data);
+        } else {
+          console.error('Failed to fetch vendors');
+        }
+      } catch (error) {
+        console.error('Error fetching vendors:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVendors();
+  }, []);
+
+  // Mock data for fallback (remove this after testing)
+  const mockVendors = [
   {
     id: 1,
     name: "Elite Photography Studios",
@@ -251,24 +303,17 @@ const vendors = [
   },
 ]
 
-export default function VendorsPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedService, setSelectedService] = useState("all")
-  const [selectedLocation, setSelectedLocation] = useState("all")
-  const [currentPage, setCurrentPage] = useState(1)
-  const vendorsPerPage = 9
-
+  // Filter vendors based on search and specialty
   const filteredVendors = vendors.filter((vendor) => {
-    const matchesSearch =
-      vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vendor.specialty.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesService =
-      selectedService === "all" ||
-      vendor.services.some((service) => service.toLowerCase().includes(selectedService.toLowerCase()))
-    const matchesLocation =
-      selectedLocation === "all" || vendor.location.toLowerCase().includes(selectedLocation.toLowerCase())
+    const matchesSearch = searchTerm === "" || 
+      (vendor.name && vendor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (vendor.specialty && vendor.specialty.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (vendor.location && vendor.location.toLowerCase().includes(searchTerm.toLowerCase()))
+    
+    const matchesSpecialty = selectedSpecialty === "all" || 
+      (vendor.specialty && vendor.specialty.toLowerCase().includes(selectedSpecialty.toLowerCase()))
 
-    return matchesSearch && matchesService && matchesLocation
+    return matchesSearch && matchesSpecialty
   })
 
   const totalPages = Math.ceil(filteredVendors.length / vendorsPerPage)
@@ -279,8 +324,7 @@ export default function VendorsPage() {
   const handleFilterChange = (filterType: string, value: string) => {
     setCurrentPage(1)
     if (filterType === "search") setSearchTerm(value)
-    if (filterType === "service") setSelectedService(value)
-    if (filterType === "location") setSelectedLocation(value)
+    if (filterType === "specialty") setSelectedSpecialty(value)
   }
 
   return (
@@ -321,27 +365,18 @@ export default function VendorsPage() {
                 className="pl-10 border border-gray-300"
               />
             </div>
-            <Select value={selectedService} onValueChange={(value) => handleFilterChange("service", value)}>
+            <Select value={selectedSpecialty} onValueChange={(value) => handleFilterChange("specialty", value)}>
               <SelectTrigger className="w-full md:w-48 border">
-                <SelectValue placeholder="Service Type" />
+                <SelectValue placeholder="Specialty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Services</SelectItem>
+                <SelectItem value="all">All Specialties</SelectItem>
                 <SelectItem value="photography">Photography</SelectItem>
                 <SelectItem value="video">Video</SelectItem>
                 <SelectItem value="drone">Drone</SelectItem>
                 <SelectItem value="virtual tours">Virtual Tours</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedLocation} onValueChange={(value) => handleFilterChange("location", value)}>
-              
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="california">California</SelectItem>
-                <SelectItem value="new york">New York</SelectItem>
-                <SelectItem value="florida">Florida</SelectItem>
-                <SelectItem value="illinois">Illinois</SelectItem>
-                <SelectItem value="texas">Texas</SelectItem>
+                <SelectItem value="real estate">Real Estate</SelectItem>
+                <SelectItem value="aerial">Aerial</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -359,65 +394,115 @@ export default function VendorsPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentVendors.map((vendor) => (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, index) => (
+                <Card key={index} className="overflow-hidden shadow-none h-full flex flex-col">
+                  <div className="relative h-48 bg-gray-200 animate-pulse"></div>
+                  <CardContent className="px-6 pb-6 pt-4 flex-1 flex flex-col">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex gap-3 items-start">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+                        <div>
+                          <div className="h-5 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-4 w-full bg-gray-200 rounded animate-pulse mb-2"></div>
+                    <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse mb-4"></div>
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-6 w-20 bg-gray-200 rounded animate-pulse"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentVendors.map((vendor) => (
               <Link key={vendor.id} href={`/vendors/${vendor.id}`} className="block h-full">
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow shadow-none cursor-pointer h-full flex flex-col mt-0 pt-[-50px] pt-[-0px] pt-0 pb-[-50px] pb-[-0px] pb-0 rounded-md">
                   <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={vendor.image || "/placeholder.svg"}
-                      alt={vendor.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 mt-0"
-                    />
+                    {vendor.image ? (
+                      <Image
+                        src={vendor.image}
+                        alt={vendor.name || "Vendor"}
+                        width={400}
+                        height={192}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 mt-0"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <div className="text-center text-gray-500">
+                          <div className="text-4xl mb-2">📷</div>
+                          <div className="text-sm">No Image Available</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <CardContent className="px-6 pb-6 pt-4 flex-1 flex flex-col">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex gap-3 items-start">
                         <div className="relative">
-                          <img
-                            src={vendor.profileImage || "/placeholder.svg"}
-                            alt={`${vendor.name} profile`}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                          />
+                          {vendor.profileImage ? (
+                            <Image
+                              src={vendor.profileImage}
+                              alt={`${vendor.name || "Vendor"} profile`}
+                              width={40}
+                              height={40}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gray-300 border-2 border-white shadow-sm flex items-center justify-center">
+                              <div className="text-gray-600 text-sm font-medium">
+                                {vendor.name ? vendor.name.charAt(0).toUpperCase() : "?"}
+                              </div>
+                            </div>
+                          )}
                           <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-slate-950">{vendor.name}</h3>
-                          <p className="font-medium text-sm text-[rgba(3,128,156,1)]">{vendor.specialty}</p>
+                          <h3 className="text-lg font-semibold text-slate-950">{vendor.name || "TBC"}</h3>
+                          <p className="font-medium text-sm text-[rgba(3,128,156,1)]">{vendor.specialty || "TBC"}</p>
                         </div>
                       </div>
                       <div className="flex gap-1 items-center py-0 pt-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{vendor.rating}</span>
-                        <span className="text-sm text-muted-foreground">({vendor.reviews})</span>
+                        <span className="text-sm font-medium">{vendor.rating || "TBC"}</span>
+                        <span className="text-sm text-muted-foreground">({vendor.reviews || "TBC"})</span>
                       </div>
                     </div>
 
-                    <p className="text-sm mb-4 text-slate-950">{vendor.description}</p>
+                    <p className="text-sm mb-4 text-slate-950">{vendor.description || "TBC"}</p>
 
                     <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4 text-black" />
-                        <span>{vendor.location}</span>
+                        <span>{vendor.location || "TBC"}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Phone className="h-4 w-4 text-black" />
-                        <span>{vendor.phone}</span>
+                        <span>{vendor.phone || "TBC"}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center mt-auto">
                       <div className="text-foreground flex flex-col">
                         <span className="font-bold text-base text-slate-950">Up to</span>
-                        <span className="font-bold text-[rgba(243,117,33,1)] text-xl">{vendor.priceRange}</span>
+                        <span className="font-bold text-[rgba(243,117,33,1)] text-xl">{vendor.priceRange || "TBC"}</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </Link>
             ))}
-          </div>
+            </div>
+          )}
 
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-8">
@@ -471,8 +556,7 @@ export default function VendorsPage() {
                 className="mt-4 bg-transparent"
                 onClick={() => {
                   setSearchTerm("")
-                  setSelectedService("all")
-                  setSelectedLocation("all")
+                  setSelectedSpecialty("all")
                   setCurrentPage(1)
                 }}
               >
@@ -483,117 +567,6 @@ export default function VendorsPage() {
         </div>
       </section>
 
-      <footer className="py-12" style={{ backgroundColor: "#273F4F" }}>
-        <div className="w-full px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <img
-                  src="/chiefmedia.png"
-                  alt="Chief Media Logo"
-                  className="h-20 w-auto"
-                />
-              </div>
-              <p className="text-white/80">
-                Connecting real estate professionals with premium media services and studio spaces.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4 text-white">Service</h3>
-              <ul className="space-y-2 text-white/80">
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Photography
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Videography
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Drone Services
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Virtual Tours
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Copywriting
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Social Media
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4 text-white">Resource</h3>
-              <ul className="space-y-2 text-white/80">
-                <li>
-                  <a href="/become-vendor" className="hover:text-white transition-colors">
-                    Become a Chief Media Vendor
-                  </a>
-                </li>
-                <li>
-                  <a href="/studios" className="hover:text-white transition-colors">
-                    Studio Booking
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4 text-white">Company</h3>
-              <ul className="space-y-2 text-white/80">
-                <li>
-                  <a href="/about" className="hover:text-white transition-colors">
-                    About Chief Media
-                  </a>
-                </li>
-                <li>
-                  <a href="/contact" className="hover:text-white transition-colors">
-                    Help & Support
-                  </a>
-                </li>
-                <li>
-                  <a href="/contact" className="hover:text-white transition-colors">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="/privacy" className="hover:text-white transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="/press" className="hover:text-white transition-colors">
-                    Press Releases
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-            <p>Chief Media ® is a part of KW Singapore Real Estate Pte. Ltd.</p>
-            <p>Copyright © 2025 KW Singapore Official Gig Economy Vendor</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

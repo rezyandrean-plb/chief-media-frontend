@@ -23,15 +23,29 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import NotificationsPanel from "./notifications-panel"
 
 export default function Header() {
-  const { user, isAuthenticated, isVendor, isOrganization, isRealtor: isClient, logout } = useAuth()
+  const { user, isAuthenticated, isVendor, isOrganization, isRealtor: isClient, isLoading, logout } = useAuth()
   const router = useRouter()
   const [avatarError, setAvatarError] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (!isUserMenuOpen) return
+      const target = e.target as Node
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isUserMenuOpen])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,116 +137,101 @@ export default function Header() {
           )}
 
           <div className="flex items-center space-x-3">
-            {isAuthenticated ? (
+            {isLoading ? (
+              <div className="h-12 w-12 rounded-full bg-gray-200 animate-pulse" />
+            ) : isAuthenticated ? (
               <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="border-2 border" asChild>
-                    <Button variant="ghost" className="relative h-12 w-12 rounded-full">
-                      {!avatarError && user?.avatar ? (
-                        <img
-                          className="rounded-full object-cover border-gray-200 h-full w-full border-0"
-                          src={user.avatar || "/placeholder.svg"}
-                          alt={user?.name || "User"}
-                          onError={handleAvatarError}
-                        />
-                      ) : (
-                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#03809C] to-[#F37521] flex items-center justify-center">
-                          {user?.name ? (
-                            <span className="text-white font-semibold text-sm">
-                              {user.name.charAt(0).toUpperCase()}
-                            </span>
-                          ) : (
-                            <User className="h-5 w-5 text-white" />
-                          )}
-                        </div>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
+                <div className="relative" ref={userMenuRef}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="relative h-12 w-12 rounded-full"
+                    onClick={() => setIsUserMenuOpen((v) => !v)}
+                    aria-expanded={isUserMenuOpen}
+                    aria-haspopup="menu"
+                  >
+                    {!avatarError && user?.avatar ? (
+                      <img
+                        className="rounded-full object-cover border-gray-200 h-full w-full border-0"
+                        src={user.avatar || "/placeholder.svg"}
+                        alt={user?.name || "User"}
+                        onError={handleAvatarError}
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#03809C] to-[#F37521] flex items-center justify-center">
+                        {user?.name ? (
+                          <span className="text-white font-semibold text-sm">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        ) : (
+                          <User className="h-5 w-5 text-white" />
+                        )}
+                      </div>
+                    )}
+                  </Button>
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-64 rounded-md border border-gray-200 bg-white shadow-xl z-[2000]">
+                      <div className="px-3 py-2">
                         <p className="text-sm font-medium leading-none">{user?.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                        <p className="text-xs leading-none text-muted-foreground capitalize">
+                        <p className="text-xs leading-none text-gray-500">{user?.email}</p>
+                        <p className="text-xs leading-none text-gray-500 capitalize">
                           {user?.role} {user?.organizationName && ` ${user.organizationName}`}
                         </p>
                       </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-
-                    {(isClient || user?.role === "client") && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href="/client/dashboard" className="flex items-center">
+                      <div className="h-px bg-gray-200 my-1" />
+                      {(isClient || user?.role === "client") && (
+                        <>
+                          <Link href="/client/dashboard" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                             <LayoutDashboard className="mr-2 h-4 w-4" />
                             <span>My Dashboard</span>
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/client/projects" className="flex items-center">
+                          <Link href="/client/projects" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                             <FolderOpen className="mr-2 h-4 w-4" />
                             <span>My Projects</span>
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/client/messages" className="flex items-center">
+                          <Link href="/client/messages" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                             <MessageSquare className="mr-2 h-4 w-4" />
                             <span>Messages</span>
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-
-                    {(isVendor || isOrganization) && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href="/vendor/dashboard" className="flex items-center">
+                          <div className="h-px bg-gray-200 my-1" />
+                        </>
+                      )}
+                      {(isVendor || isOrganization) && (
+                        <>
+                          <Link href="/vendor/dashboard" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                             <LayoutDashboard className="mr-2 h-4 w-4" />
                             <span>My Dashboard</span>
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/vendor/gigs" className="flex items-center">
+                          <Link href="/vendor/gigs" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                             <Briefcase className="mr-2 h-4 w-4" />
                             <span>My Gigs</span>
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/vendor/projects" className="flex items-center">
+                          <Link href="/vendor/projects" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                             <FolderOpen className="mr-2 h-4 w-4" />
                             <span>My Projects</span>
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/vendor/messages" className="flex items-center">
+                          <Link href="/vendor/messages" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                             <MessageSquare className="mr-2 h-4 w-4" />
                             <span>Messages</span>
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/vendor/earnings" className="flex items-center">
+                          <Link href="/vendor/earnings" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                             <DollarSign className="mr-2 h-4 w-4" />
                             <span>Earnings</span>
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile/settings" className="flex items-center">
+                          <div className="h-px bg-gray-200 my-1" />
+                        </>
+                      )}
+                      <Link href="/profile/settings" className="flex items-center px-3 py-2 text-sm hover:bg-gray-50">
                         <Settings className="mr-2 h-4 w-4" />
-                        <span>Profile Settings</span>
+                        <span>Manage Profile</span>
                       </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Logout</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <button onClick={handleLogout} className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 text-red-600">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>

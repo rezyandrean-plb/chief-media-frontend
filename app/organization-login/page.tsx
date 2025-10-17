@@ -22,7 +22,7 @@ export default function OrganizationLoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    const success = await login(email, password, "organization")
+    const success = await login(email, password)
     if (success) {
       router.push("/vendor/dashboard")
     } else {

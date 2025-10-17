@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   Camera,
@@ -274,6 +275,8 @@ export default function BecomeVendorPage() {
   const timelineRef = useRef<HTMLDivElement>(null)
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
   const [currentStep, setCurrentStep] = useState(1)
+  const [submitted, setSubmitted] = useState(false)
+  const router = useRouter()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -363,6 +366,30 @@ export default function BecomeVendorPage() {
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isStepValid(3)) return;
+
+    try {
+      const res = await fetch('/api/vendor-enquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (!res.ok) throw new Error('Failed to submit');
+      setSubmitted(true);
+      setFormData({
+        firstName: '', lastName: '', email: '', phone: '', businessName: '', serviceType: '', experience: '', location: '', portfolio: '', description: '', agreedToTerms: false, address: '', linkedin: ''
+      });
+      // Auto-redirect to homepage after 10 seconds
+      setTimeout(() => {
+        router.push('/');
+      }, 10000);
+    } catch (err) {
+      alert('There was an error submitting your application. Please try again.');
+    }
   }
 
   return (
@@ -585,6 +612,8 @@ export default function BecomeVendorPage() {
                                   "/placeholder.svg" ||
                                   "/placeholder.svg" ||
                                   "/placeholder.svg" ||
+                                  "/placeholder.svg" ||
+                                  "/placeholder.svg" ||
                                   "/placeholder.svg"
                                 }
                                 alt={testimonial.name}
@@ -636,8 +665,22 @@ export default function BecomeVendorPage() {
       <section className="text-slate-950 mb-2 text-base">
         <div className="w-full px-[7vw] py-20 pb-20">
           <div className="grid lg:grid-cols-5 gap-16 items-start">
-            {/* Left Side - Application Form */}
+            {/* Left Side - Application Form or Success State */}
             <div className="lg:col-span-3">
+              {submitted ? (
+                <div className="p-10 shadow-none rounded-md border-0 bg-popover-foreground flex flex-col items-center text-center">
+                  <div className="mb-4 rounded-full bg-green-100 p-4">
+                    <CheckCircle className="h-10 w-10 text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-background mb-2">Application Submitted</h3>
+                  <p className="text-background/80 mb-6 max-w-xl">
+                    Thank you for applying to join Chief Media's vendor network. We'll review your application and contact you within 24 hours.
+                    You'll be redirected to the homepage in 10 seconds.
+                  </p>
+                  <Button onClick={() => router.push('/')} className="bg-[#03809C] hover:bg-[#03809C]/90 text-white">Go to Homepage now</Button>
+                </div>
+              ) : (
+              <>
               {/* Progress Indicator */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
@@ -652,7 +695,7 @@ export default function BecomeVendorPage() {
                 </div>
               </div>
 
-              <form className="space-y-8">
+              <form className="space-y-8" onSubmit={handleSubmit}>
                 {currentStep === 1 && (
                   <div className="p-8 shadow-none rounded-md border-slate-950 border-0 px-7 py-9 bg-popover-foreground">
                     <div className="flex items-center mb-6">
@@ -732,6 +775,8 @@ export default function BecomeVendorPage() {
                         </label>
                         <input
                           type="url"
+                          value={formData.linkedin}
+                          onChange={(e) => handleInputChange("linkedin", e.target.value)}
                           className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 rounded-md border py-2 text-sm border-slate-400 placeholder:text-gray-400 placeholder:font-medium text-background"
                           placeholder="https://linkedin.com/in/yourprofile"
                         />
@@ -889,6 +934,8 @@ export default function BecomeVendorPage() {
                   </p>
                 )}
               </form>
+              </>
+              )}
             </div>
 
             {/* Right Side - Enhanced Messaging */}
@@ -966,117 +1013,6 @@ export default function BecomeVendorPage() {
         </div>
       </section>
 
-      <footer className="py-12" style={{ backgroundColor: "#273F4F" }}>
-        <div className="w-full px-[7vw]">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <img
-                  src="/chiefmedia.png"
-                  alt="Chief Media Logo"
-                  className="h-20 w-auto"
-                />
-              </div>
-              <p className="text-white/80">
-                Connecting real estate professionals with premium media services and studio spaces.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4 text-white">Service</h3>
-              <ul className="space-y-2 text-white/80">
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Photography
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Videography
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Drone Services
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Virtual Tours
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Copywriting
-                  </a>
-                </li>
-                <li>
-                  <a href="/vendors" className="hover:text-white transition-colors">
-                    Social Media
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4 text-white">Resource</h3>
-              <ul className="space-y-2 text-white/80">
-                <li>
-                  <a href="/become-vendor" className="hover:text-white transition-colors">
-                    Become a Chief Media Vendor
-                  </a>
-                </li>
-                <li>
-                  <a href="/studios" className="hover:text-white transition-colors">
-                    Studio Booking
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4 text-white">Company</h3>
-              <ul className="space-y-2 text-white/80">
-                <li>
-                  <a href="/about" className="hover:text-white transition-colors">
-                    About Chief Media
-                  </a>
-                </li>
-                <li>
-                  <a href="/contact" className="hover:text-white transition-colors">
-                    Help & Support
-                  </a>
-                </li>
-                <li>
-                  <a href="/contact" className="hover:text-white transition-colors">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="/privacy" className="hover:text-white transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="/press" className="hover:text-white transition-colors">
-                    Press Releases
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-            <p>Chief Media ® is a part of KW Singapore Real Estate Pte. Ltd.</p>
-            <p>Copyright © 2025 KW Singapore Official Gig Economy Vendor</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

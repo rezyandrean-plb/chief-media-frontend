@@ -9,289 +9,30 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
 import { Star, MapPin, ArrowLeft, Clock, CheckCircle, Users, Send, MessageCircle, Search, X } from "lucide-react"
 import Link from "next/link"
-import { notFound } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
-// Mock vendor data (same as vendors page)
-const vendors = [
-  {
-    id: 1,
-    name: "Elite Photography Studios",
-    specialty: "Real Estate Photography",
-    rating: 4.9,
-    reviews: 127,
-    location: "Los Angeles, CA",
-    phone: "(555) 123-4567",
-    email: "contact@elitephoto.com",
-    image: "/professional-real-estate-photography-portfolio.png",
-    services: ["Photography", "Drone", "Virtual Tours"],
-    priceRange: "$200-500",
-    description: "Professional real estate photography with 10+ years experience",
-    bio: "Elite Photography Studios has been the premier choice for real estate photography in Los Angeles for over a decade. Our team of certified photographers specializes in capturing properties in their best light, using state-of-the-art equipment and proven techniques to showcase every detail.",
-    portfolio: [
-      {
-        image: "/luxury-home-exterior.png",
-        title: "Luxury Estate Photography",
-        description:
-          "Stunning exterior shots of a $2.5M luxury estate featuring dramatic lighting and architectural details that highlight the property's premium features.",
-        date: "March 2024",
-        cost: "$400-600",
-        duration: "2-3 days",
-        category: "Luxury Properties",
-      },
-      {
-        image: "/modern-kitchen.png",
-        title: "Modern Kitchen Interior",
-        description:
-          "Contemporary kitchen photography showcasing clean lines, premium appliances, and natural lighting to create an inviting atmosphere for potential buyers.",
-        date: "February 2024",
-        cost: "$250-350",
-        duration: "1-2 days",
-        category: "Interior Design",
-      },
-      {
-        image: "/master-bedroom-staging.png",
-        title: "Master Bedroom Staging",
-        description:
-          "Professional staging photography that transforms the master bedroom into a serene retreat, emphasizing space, comfort, and luxury amenities.",
-        date: "January 2024",
-        cost: "$300-450",
-        duration: "1-2 days",
-        category: "Staging & Design",
-      },
-      {
-        image: "/interior-real-estate-photography.png",
-        title: "Living Room Showcase",
-        description:
-          "Expertly composed living room shots that capture the flow of natural light and highlight the open floor plan and designer finishes.",
-        date: "December 2023",
-        cost: "$200-300",
-        duration: "1 day",
-        category: "Residential",
-      },
-      {
-        image: "/3d-virtual-tour-real-estate.png",
-        title: "Virtual Tour Experience",
-        description:
-          "Interactive 3D virtual tour allowing potential buyers to explore every corner of this stunning property from the comfort of their home.",
-        date: "November 2023",
-        cost: "$500-750",
-        duration: "3-4 days",
-        category: "Virtual Tours",
-      },
-      {
-        image: "/drone-aerial-real-estate-video.png",
-        title: "Aerial Property Overview",
-        description:
-          "Breathtaking drone footage showcasing the property's location, surrounding amenities, and neighborhood context from unique aerial perspectives.",
-        date: "October 2023",
-        cost: "$350-500",
-        duration: "2-3 days",
-        category: "Aerial Photography",
-      },
-      {
-        image: "/real-estate-video-walkthrough.png",
-        title: "Cinematic Property Tour",
-        description:
-          "Professional video walkthrough with smooth camera movements and cinematic lighting that tells the story of this beautiful home.",
-        date: "September 2023",
-        cost: "$600-800",
-        duration: "3-5 days",
-        category: "Video Production",
-      },
-      {
-        image: "/3d-home-tour-technology.png",
-        title: "Commercial Space Photography",
-        description:
-          "High-end commercial photography for office spaces, highlighting modern design elements and professional atmosphere for corporate clients.",
-        date: "August 2023",
-        cost: "$450-650",
-        duration: "2-3 days",
-        category: "Commercial",
-      },
-      {
-        image: "/professional-real-estate-photography-portfolio.png",
-        title: "Twilight Photography Session",
-        description:
-          "Magical twilight shots capturing the property's exterior lighting and ambiance during the golden hour for maximum visual impact.",
-        date: "July 2023",
-        cost: "$300-400",
-        duration: "1-2 days",
-        category: "Twilight Photography",
-      },
-      {
-        image: "/luxury-home-exterior.png",
-        title: "Pool & Outdoor Living",
-        description:
-          "Stunning outdoor photography showcasing pool areas, landscaping, and outdoor entertainment spaces that highlight the property's lifestyle appeal.",
-        date: "June 2023",
-        cost: "$250-400",
-        duration: "1-2 days",
-        category: "Outdoor Spaces",
-      },
-    ],
-    serviceDetails: [
-      {
-        name: "Standard Photography Package",
-        price: "$200",
-        description: "20-30 high-resolution photos, basic editing",
-        features: ["20-30 high-resolution photos", "Basic editing", "Online gallery"],
-      },
-      {
-        name: "Premium Photography Package",
-        price: "$350",
-        description: "40-50 photos, advanced editing, twilight shots",
-        features: ["40-50 photos", "Advanced editing", "Twilight shots", "Drone shots"],
-      },
-      {
-        name: "Drone Add-on",
-        price: "$150",
-        description: "Aerial exterior shots and neighborhood views",
-        features: ["Aerial exterior shots", "Neighborhood views", "Edited footage"],
-      },
-      {
-        name: "Virtual Tour",
-        price: "$300",
-        description: "Interactive 3D walkthrough experience",
-        features: ["Interactive 3D walkthrough", "24/7 availability", "Mobile-friendly"],
-      },
-      {
-        name: "Luxury Estate Package",
-        price: "$500",
-        description: "Complete luxury property showcase with premium editing",
-        features: [
-          "60+ high-resolution photos",
-          "Professional staging consultation",
-          "Luxury brochure design",
-          "Social media content",
-        ],
-      },
-      {
-        name: "Commercial Property Package",
-        price: "$450",
-        description: "Comprehensive commercial space documentation",
-        features: [
-          "Interior & exterior shots",
-          "Floor plan photography",
-          "Business hour flexibility",
-          "Rush delivery available",
-        ],
-      },
-    ],
-    availability: "Available 7 days a week",
-    responseTime: "Within 2 hours",
-    completedJobs: 450,
-    yearsExperience: 12,
-    profileImage: "/professional-real-estate-photography-portfolio.png",
-  },
-  {
-    id: 2,
-    name: "SkyView Drone Services",
-    specialty: "Aerial Photography & Video",
-    rating: 4.8,
-    reviews: 89,
-    location: "San Francisco, CA",
-    phone: "(555) 234-5678",
-    email: "info@skyviewdrone.com",
-    image: "/drone-aerial-real-estate-video.png",
-    services: ["Drone", "Video", "Photography"],
-    priceRange: "$300-800",
-    description: "Certified drone pilots specializing in stunning aerial content",
-    bio: "SkyView Drone Services brings a unique perspective to real estate marketing with our certified drone pilots and cutting-edge aerial technology. We specialize in capturing breathtaking aerial footage that showcases properties and their surroundings like never before.",
-    portfolio: [
-      {
-        image: "/drone-aerial-real-estate-video.png",
-        title: "Aerial Property Overview",
-        description:
-          "Comprehensive aerial footage showcasing the entire property, surrounding neighborhood, and proximity to local amenities from a bird's eye perspective.",
-        date: "March 2024",
-        cost: "$500-800",
-        duration: "3-4 days",
-        category: "Aerial Views",
-      },
-      {
-        image: "/luxury-home-exterior.png",
-        title: "Dramatic Aerial Angles",
-        description:
-          "Creative aerial photography capturing unique angles and perspectives that ground-level photography simply cannot achieve, highlighting architectural beauty.",
-        date: "February 2024",
-        cost: "$400-600",
-        duration: "2-3 days",
-        category: "Architectural Highlights",
-      },
-      {
-        image: "/3d-home-tour-technology.png",
-        title: "Neighborhood Context",
-        description:
-          "Wide-angle aerial shots that provide context of the property within its neighborhood, showing nearby parks, schools, and community features.",
-        date: "January 2024",
-        cost: "$350-500",
-        duration: "2-3 days",
-        category: "Neighborhood Views",
-      },
-      {
-        image: "/real-estate-video-walkthrough.png",
-        title: "Cinematic Aerial Video",
-        description:
-          "Hollywood-style aerial cinematography with smooth tracking shots and dynamic movements that create an emotional connection with the property.",
-        date: "December 2023",
-        cost: "$700-1000",
-        duration: "4-5 days",
-        category: "Cinematic Video",
-      },
-      {
-        image: "/professional-real-estate-photography-portfolio.png",
-        title: "Sunset Aerial Photography",
-        description:
-          "Breathtaking sunset aerial shots that capture the property bathed in golden light, creating stunning marketing materials for luxury listings.",
-        date: "November 2023",
-        cost: "$450-650",
-        duration: "2-3 days",
-        category: "Golden Hour",
-      },
-      {
-        image: "/3d-virtual-tour-real-estate.png",
-        title: "Commercial Development Aerial",
-        description:
-          "Large-scale aerial documentation of commercial developments, construction progress, and site planning for developers and investors.",
-        date: "October 2023",
-        cost: "$800-1200",
-        duration: "5-7 days",
-        category: "Commercial Development",
-      },
-      {
-        image: "/interior-real-estate-photography.png",
-        title: "Waterfront Property Showcase",
-        description:
-          "Spectacular aerial views of waterfront properties highlighting water access, dock facilities, and scenic surroundings that define luxury living.",
-        date: "September 2023",
-        cost: "$600-900",
-        duration: "3-4 days",
-        category: "Waterfront Properties",
-      },
-      {
-        image: "/modern-kitchen.png",
-        title: "Agricultural Land Survey",
-        description:
-          "Comprehensive aerial mapping and photography of agricultural properties, showcasing land boundaries, irrigation systems, and crop conditions.",
-        date: "August 2023",
-        cost: "$400-700",
-        duration: "2-4 days",
-        category: "Agricultural",
-      },
-    ],
-    serviceDetails: [
-      { name: "Aerial Photography", price: "$300", description: "15-20 stunning aerial photos" },
-      { name: "Aerial Video Package", price: "$500", description: "2-3 minute cinematic aerial video" },
-      { name: "Complete Aerial Package", price: "$700", description: "Photos + video + raw footage" },
-    ],
-    availability: "Monday - Saturday",
-    responseTime: "Within 4 hours",
-    completedJobs: 280,
-    yearsExperience: 8,
-    profileImage: "/drone-aerial-real-estate-video.png",
-  },
-]
+type Vendor = {
+  id: number
+  name: string
+  phone: string
+  email: string
+  specialty?: string | null
+  rating?: number | null
+  reviews?: number | null
+  location?: string | null
+  image?: string | null
+  profileImage?: string | null
+  services?: string[] | null
+  priceRange?: string | null
+  description?: string | null
+  bio?: string | null
+  availability?: string | null
+  responseTime?: string | null
+  completedJobs?: number | null
+  yearsExperience?: number | null
+  serviceDetails?: Array<{ name: string; price: string; description: string; features?: string[] }>
+  portfolio?: Array<{ image: string; title: string; description: string; date: string; cost: string; duration: string; category: string }>
+}
 
 const reviews = [
   {
@@ -353,7 +94,8 @@ const reviews = [
 
 export default function VendorPage({ params }: { params: { id: string } }) {
   const vendorId = Number.parseInt(params.id)
-  const vendor = vendors.find((v) => v.id === vendorId)
+  const [vendor, setVendor] = useState<Vendor | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
 
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [currentPortfolioIndex, setCurrentPortfolioIndex] = useState(0)
@@ -380,6 +122,36 @@ export default function VendorPage({ params }: { params: { id: string } }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const [serviceCurrentIndex, setServiceCurrentIndex] = useState(0)
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchVendor = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch(`/api/vendors/${vendorId}`)
+        if (!res.ok) {
+          setVendor(null)
+          return
+        }
+        const json = await res.json()
+        if (isMounted) {
+          setVendor(json.data as Vendor)
+        }
+      } catch (e) {
+        setVendor(null)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+    if (!Number.isNaN(vendorId)) {
+      fetchVendor()
+    } else {
+      setLoading(false)
+    }
+    return () => {
+      isMounted = false
+    }
+  }, [vendorId])
 
   const openGallery = (images: string[], startIndex = 0) => {
     setGalleryImages(images)
@@ -444,17 +216,46 @@ export default function VendorPage({ params }: { params: { id: string } }) {
     if (showOnlyWithFiles && !review.hasFiles) return false
     return true
   })
+  // Render loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="w-full px-[7vw] py-12">
+          <div className="h-8 w-40 bg-gray-200 rounded mb-4"></div>
+          <div className="h-64 w-full bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    )
+  }
 
+  // Handle vendor not found gracefully on client
   if (!vendor) {
-    notFound()
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="w-full px-[7vw] py-12">
+          <Button variant="ghost" asChild>
+            <Link href="/vendors" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Vendors
+            </Link>
+          </Button>
+          <div className="mt-8">
+            <h1 className="text-2xl font-bold">Vendor not found</h1>
+            <p className="mt-2 text-muted-foreground">The vendor you are looking for does not exist.</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const nextPortfolioItem = () => {
-    setCurrentPortfolioIndex((prev) => (prev + 1) % vendor!.portfolio.length)
+    const length = (vendor?.portfolio || []).length || 1
+    setCurrentPortfolioIndex((prev) => (prev + 1) % length)
   }
 
   const prevPortfolioItem = () => {
-    setCurrentPortfolioIndex((prev) => (prev - 1 + vendor!.portfolio.length) % vendor!.portfolio.length)
+    const length = (vendor?.portfolio || []).length || 1
+    setCurrentPortfolioIndex((prev) => (prev - 1 + length) % length)
   }
 
   const openPortfolioModal = (item: any) => {
@@ -484,7 +285,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
           <div className="relative">
             <div className="aspect-[3/1] rounded-lg overflow-hidden bg-muted w-full">
               <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/eyestetix-studio-9UXIpg75ing-unsplash.jpg-itt62kZ9k9sliaLGiv8vGhKZwhkDR9.jpeg"
+                src={vendor.image || "/professional-real-estate-photography-portfolio.png"}
                 alt={vendor.name}
                 className="w-full h-full object-cover"
               />
@@ -517,7 +318,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {vendor.services.map((service) => (
+                      {(vendor.services || []).map((service) => (
                         <Badge className="bg-muted text-slate-950" key={service} variant="secondary">
                           {service}
                         </Badge>
@@ -526,7 +327,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                   </div>
                 </div>
 
-                <p className="leading-relaxed text-slate-950 text-base mt-4">{vendor.bio}</p>
+                    <p className="leading-relaxed text-slate-950 text-base mt-4">{vendor.bio || vendor.description}</p>
               </div>
 
               <div className="lg:w-80 lg:ml-auto">
@@ -534,7 +335,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                   <div className="flex items-center gap-4">
                     <CheckCircle className="h-6 w-6 text-green-500" />
                     <div>
-                      <div className="text-2xl font-bold text-slate-950">{vendor.completedJobs}+</div>
+                      <div className="text-2xl font-bold text-slate-950">{vendor.completedJobs ?? 0}+</div>
                       <div className="text-sm font-medium text-slate-600">Orders Completed</div>
                     </div>
                   </div>
@@ -542,7 +343,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                   <div className="flex items-center gap-4">
                     <Clock className="h-6 w-6 text-blue-500" />
                     <div>
-                      <div className="text-2xl font-bold text-slate-950">{vendor.responseTime}</div>
+                      <div className="text-2xl font-bold text-slate-950">{vendor.responseTime || "—"}</div>
                       <div className="text-sm font-medium text-slate-600">Response Time</div>
                     </div>
                   </div>
@@ -550,7 +351,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                   <div className="flex items-center gap-4">
                     <Users className="h-6 w-6 text-purple-500" />
                     <div>
-                      <div className="text-2xl font-bold text-slate-950">{vendor.yearsExperience} Years</div>
+                      <div className="text-2xl font-bold text-slate-950">{vendor.yearsExperience ?? 0} Years</div>
                       <div className="text-sm font-medium text-slate-600">Experience</div>
                     </div>
                   </div>
@@ -573,7 +374,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
             <div className="relative">
               <div className="overflow-x-auto scrollbar-hide">
                 <div className="flex gap-4 pb-4">
-                  {vendor.portfolio.map((item, index) => (
+                  {(vendor.portfolio || []).map((item, index) => (
                     <div
                       key={index}
                       className="flex-shrink-0 w-80 aspect-square rounded-lg overflow-hidden cursor-pointer group relative"
@@ -614,7 +415,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                   className="flex transition-transform duration-300 ease-in-out min-h-[500px] py-0 my-0 mb-[-40px]"
                   style={{ transform: `translateX(-${serviceCurrentIndex * (100 / 3)}%)` }}
                 >
-                  {vendor.serviceDetails.map((service, index) => (
+                  {(vendor.serviceDetails || []).map((service, index) => (
                     <div key={index} className="w-1/3 flex-shrink-0 px-3 h-full">
                       <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group shadow-none border border-gray-300 pt-[-50px] pt-[-0px] pt-[-70px] pt-0 h-full flex flex-col pb-0">
                         <div className="relative">
@@ -690,11 +491,11 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                 </div>
               </div>
 
-              {vendor.serviceDetails.length > 3 && <></>}
+              {(vendor.serviceDetails || []).length > 3 && <></>}
 
-              {vendor.serviceDetails.length > 3 && (
+              {(vendor.serviceDetails || []).length > 3 && (
                 <div className="flex justify-center gap-2 mt-6">
-                  {Array.from({ length: Math.ceil(vendor.serviceDetails.length / 3) }).map((_, groupIndex) => (
+                  {Array.from({ length: Math.ceil(((vendor.serviceDetails || []).length) / 3) }).map((_, groupIndex) => (
                     <button
                       key={groupIndex}
                       onClick={() => setServiceCurrentIndex(groupIndex * 3)}
@@ -806,7 +607,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                     </Select>
 
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="files-filter" checked={showOnlyWithFiles} onCheckedChange={setShowOnlyWithFiles} />
+                      <Checkbox id="files-filter" checked={showOnlyWithFiles} onCheckedChange={(checked) => setShowOnlyWithFiles(checked === true)} />
                       <label htmlFor="files-filter" className="text-sm text-slate-950">
                         Only show reviews with files ({reviewsWithFiles})
                       </label>
@@ -994,7 +795,7 @@ export default function VendorPage({ params }: { params: { id: string } }) {
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                     className="flex-1 text-sm h-8 rounded-full border-gray-200"
-                    style={{ focusBorderColor: "#03809C" }}
+                    // Removing invalid focusBorderColor style; use CSS class if needed
                   />
                   <Button
                     size="sm"

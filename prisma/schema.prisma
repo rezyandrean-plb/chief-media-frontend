@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Authentication models
+enum UserRole {
+  client
+  vendor
+  organization
+  realtor
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  name         String
+  passwordHash String
+  passwordSet  Boolean   @default(false)
+  role         UserRole  @default(client)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // relations
+  verificationTokens VerificationToken[]
+}
+
+model VerificationToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  type      String   @default("set_password")
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  // user link
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Vendor {
+  id          Int      @id @default(autoincrement())
+  name        String?
+  phone       String?
+  email       String?
+  
+  // New frontend-compatible fields
+  specialty   String?  @default("General Services") @map("specialty_new")
+  rating      Float?   @default(5.0) @map("rating_new")
+  reviews     Int?     @default(0) @map("reviews_new")
+  location    String?  @default("") @map("location_new")
+  image       String?  @map("image_new")
+  profileImage String? @map("profile_image")
+  services    String[] @default([]) @map("services_new")
+  priceRange  String?  @map("price_range")
+  description String?  @map("description_new")
+  status      String?  @default("pending") @map("status_new")
+  createdAt   DateTime? @default(now()) @map("created_at_new")
+  updatedAt   DateTime? @default(now()) @map("updated_at_new")
+
+  // Existing fields (keep for backward compatibility)
+  company     String?
+  address     String?
+  website     String?
+  rating_old  Decimal? @db.Decimal(10, 2) @map("rating")
+  reviews_count Int?   @map("reviews_count")
+  specialties Json?    @map("specialties")
+  business_hours Json?
+  pricing     Json?
+  social_media Json?
+  document_id String?
+  created_at  DateTime?
+  updated_at  DateTime?
+  published_at DateTime?
+  created_by_id Int?
+  updated_by_id Int?
+  locale      String?
+
+  @@map("vendors")
+}
+
+model VendorEnquiry {
+  id                Int       @id @default(autoincrement())
+  firstName         String
+  lastName          String
+  email             String
+  phone             String
+  businessName      String?
+  serviceType       String
+  experience        String
+  location          String
+  portfolio         String?
+  description       String
+  agreedToTerms     Boolean
+  address           String?
+  linkedin          String?
+  status            String    @default("pending")
+  convertedToVendor Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("vendor_enquiries")
+}

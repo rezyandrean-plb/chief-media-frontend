@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
-  const [fullName, setFullName] = useState("")
+  const [password, setPassword] = useState("")
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
@@ -22,12 +22,11 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    const success = await login(email, fullName, "client")
+    const success = await login(email, password)
     if (success) {
       router.push("/client/dashboard")
     } else {
-      // Handle error - in real app, show error message
-      console.error("Login failed")
+      // toast is shown from context; optionally add inline message here
     }
     setIsLoading(false)
   }
@@ -99,24 +98,6 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-3">
               <Label
-                htmlFor="fullname"
-                className="text-sm font-semibold text-[#273F4F] uppercase tracking-wider text-slate-950"
-              >
-                Full Name
-              </Label>
-              <Input
-                id="fullname"
-                type="text"
-                placeholder="Enter your full name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="h-14 border-2 border-gray-200 focus:border-[#F37521] focus:ring-[#F37521] text-base px-4 rounded-md shadow-none"
-                required
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label
                 htmlFor="email"
                 className="text-sm font-semibold text-[#273F4F] uppercase tracking-wider text-slate-950"
               >
@@ -128,6 +109,24 @@ export default function LoginPage() {
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="h-14 border-2 border-gray-200 focus:border-[#F37521] focus:ring-[#F37521] text-base px-4 rounded-md shadow-none"
+                required
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label
+                htmlFor="password"
+                className="text-sm font-semibold text-[#273F4F] uppercase tracking-wider text-slate-950"
+              >
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="h-14 border-2 border-gray-200 focus:border-[#F37521] focus:ring-[#F37521] text-base px-4 rounded-md shadow-none"
                 required
               />
