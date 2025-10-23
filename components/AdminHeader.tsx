@@ -11,6 +11,7 @@ import {
   Home
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
 
 interface AdminHeaderProps {
   title: string;
@@ -27,10 +28,10 @@ export default function AdminHeader({
 }: AdminHeaderProps) {
   const router = useRouter();
   const [notifications] = useState(3); // Mock notification count
+  const { logout } = useAdminAuth();
 
   const handleLogout = () => {
-    // Add logout logic here
-    router.push('/');
+    logout();
   };
 
   return (
@@ -80,26 +81,6 @@ export default function AdminHeader({
                 </span>
               )}
             </Button>
-
-            {/* User Menu */}
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm">
-                <User className="h-5 w-5 text-gray-600" />
-              </Button>
-              
-              <Button variant="ghost" size="sm">
-                <Settings className="h-5 w-5 text-gray-600" />
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleLogout}
-                className="text-gray-600 hover:text-red-600"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
 
             {/* Home Button */}
             <Button

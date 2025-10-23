@@ -18,6 +18,24 @@ export const metadata: Metadata = {
   title: "KW Chief Media - Real Estate Media Services",
   description: "Professional real estate photography, videography, and studio booking platform",
   generator: "v0.app",
+  icons: {
+    icon: [
+      {
+        url: "/favicon.ico",
+        type: "image/x-icon",
+      },
+      {
+        url: "/favicon.webp",
+        type: "image/webp",
+      },
+      {
+        url: "/images/chief-media.webp",
+        type: "image/webp",
+      },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/images/chief-media.webp",
+  },
 }
 
 export default function RootLayout({

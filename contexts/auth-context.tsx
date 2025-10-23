@@ -17,7 +17,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string, role?: string) => Promise<boolean>
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>
   logout: () => void
   isAuthenticated: boolean
   isVendor: boolean
@@ -55,7 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const timeout = setTimeout(() => controller.abort(), 2000)
         fetch('/api/auth/me', { method: 'GET', signal: controller.signal })
           .then(async (res) => {
-            if (!res.ok) return
+            if (!res.ok) {
+              // If server says not authenticated, clear localStorage
+              setUser(null)
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('kw-chief-media-user')
+              }
+              return
+            }
             const { data } = await res.json()
             const apiUser: User = {
               id: String(data.id),
@@ -101,13 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, isMounted])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, rememberMe: boolean = false): Promise<boolean> => {
     setIsLoading(true)
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       })
       if (!res.ok) {
         let message = 'Invalid credentials'

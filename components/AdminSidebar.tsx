@@ -17,6 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
 
 type NavChild = { name: string; href: string };
 interface NavItem {
@@ -51,6 +52,12 @@ const navigation: ReadonlyArray<NavItem> = [
     current: false
   },
   {
+    name: 'Users',
+    href: '/admin/users',
+    icon: Users,
+    current: false
+  },
+  {
     name: 'Settings',
     href: '/admin/settings',
     icon: Settings,
@@ -63,6 +70,7 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const { adminUser, logout } = useAdminAuth();
 
   const handleNavigation = (href: string) => {
     router.push(href);
@@ -70,7 +78,7 @@ export default function AdminSidebar() {
   };
 
   const handleLogout = () => {
-    router.push('/');
+    logout();
   };
 
   const toggleGroup = (groupName: string) => {
@@ -233,11 +241,11 @@ export default function AdminSidebar() {
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center mb-3">
               <div className="h-8 w-8 rounded-full bg-[#B40101] flex items-center justify-center">
-                <span className="text-white text-sm font-medium">A</span>
+                <span className="text-white text-sm font-medium">{(adminUser?.email?.[0] || 'A').toUpperCase()}</span>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900">Admin User</p>
-                <p className="text-xs text-gray-500">admin@chiefmedia.sg</p>
+                <p className="text-sm font-medium text-gray-900">{adminUser?.email ? adminUser.email.split('@')[0] : 'Admin User'}</p>
+                <p className="text-xs text-gray-500">{adminUser?.email || 'admin@chiefmedia.com'}</p>
               </div>
             </div>
             <Button

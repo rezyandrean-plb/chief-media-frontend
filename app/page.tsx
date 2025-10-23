@@ -577,9 +577,10 @@ export default function HomePage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="mb-2 text-slate-950 font-semibold">Dedicated project managers</h3>
+                    <h3 className="mb-2 text-slate-950 font-semibold">KW-Exclusive Media Ecosystem</h3>
                     <p className="text-sm leading-relaxed text-slate-950">
-                      Count on an account manager to find you the right talent and see to your project's every need.
+                      The only end-to-end content infrastructure built for KW Singapore realtors. <br />
+                      From concept to camera to post, we connect every realtor to vetted creators, and brand-safe delivery — all within the KW ecosystem.
                     </p>
                   </div>
                 </div>
@@ -595,9 +596,10 @@ export default function HomePage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="mb-2 font-semibold text-slate-950">Satisfaction guarantee</h3>
+                    <h3 className="mb-2 font-semibold text-slate-950">Verified Vendors, Preferential Rates</h3>
                     <p className="text-sm leading-relaxed text-slate-950">
-                      Order confidently, with guaranteed refunds for less-than-satisfactory deliveries.
+                      A curated gig network that guarantees quality, speed, and pricing integrity. <br />
+                      Through KW Gig Economy, every vendor is approved, and performance-tracked — ensuring every realtor gets consistent excellence at KW-exclusive terms.
                     </p>
                   </div>
                 </div>
@@ -613,9 +615,10 @@ export default function HomePage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="mb-2 text-slate-950 font-semibold">Advanced management tools</h3>
+                    <h3 className="mb-2 text-slate-950 font-semibold">Scalable, Data-Driven Systems</h3>
                     <p className="text-sm leading-relaxed text-slate-950">
-                      Seamlessly integrate media professionals into your team and projects
+                      Content production powered by automation, analytics, and accountability. <br /> 
+                      From studio bookings to reel outputs, every creative workflow is systemised, measured, and designed to scale your business with clarity and consistency. 
                     </p>
                   </div>
                 </div>
@@ -631,9 +634,10 @@ export default function HomePage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="mb-2 text-slate-950 font-semibold">Flexible payment models</h3>
+                    <h3 className="mb-2 text-slate-950 font-semibold">Empowering Realtors to Create</h3>
                     <p className="text-sm leading-relaxed text-slate-950">
-                      Pay per project or opt for monthly rates to facilitate longer-term collaboration.
+                      We don’t just produce content — we make creation accessible. <br />
+                      Chief Media gives KW realtors the space, structure, and tools to build confidently on their own — from studio access to guided media systems that make consistent content creation second nature.
                     </p>
                   </div>
                 </div>
@@ -669,7 +673,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
                 icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z M3 7l9 6 9-6",
@@ -685,11 +689,6 @@ export default function HomePage() {
                 icon: "M13 10V3L4 14h7v7l9-11h-7z",
                 title: "Get quality work done quickly",
                 description: "and within budget",
-              },
-              {
-                icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-                title: "Only pay when you're happy",
-                description: "with the delivered results",
               },
               {
                 icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
@@ -717,7 +716,7 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <h2 className="font-bold mb-4 text-slate-950 text-4xl">Trusted by Real Estate Professionals</h2>
             <p className="text-slate-950 text-base">
-              See what our clients say about their experience with KW Chief Media
+              See what our clients say about their experience with KW Gig Economy
             </p>
           </div>
 
@@ -736,7 +735,7 @@ export default function HomePage() {
                       name: "Sarah Johnson",
                       role: "Real Estate Agent",
                       rating: 5,
-                      text: "KW Chief Media transformed how I showcase properties. The quality is exceptional and the booking process is seamless.",
+                      text: "KW Gig Economy transformed how I showcase properties. The quality is exceptional and the booking process is seamless.",
                     },
                     {
                       name: "Michael Chen",
@@ -759,7 +758,7 @@ export default function HomePage() {
                     {
                       name: "James Thompson",
                       role: "Real Estate Broker",
-                      text: "Working with KW Chief Media has streamlined my entire marketing process. The results speak for themselves.",
+                      text: "Working with KW Gig Economy has streamlined my entire marketing process. The results speak for themselves.",
                     },
                     {
                       name: "Lisa Park",
@@ -781,7 +780,7 @@ export default function HomePage() {
                               name: "Sarah Johnson",
                               role: "Real Estate Agent",
                               rating: 5,
-                              text: "KW Chief Media transformed how I showcase properties. The quality is exceptional and the booking process is seamless.",
+                              text: "KW Gig Economy transformed how I showcase properties. The quality is exceptional and the booking process is seamless.",
                             },
                             {
                               name: "Michael Chen",
@@ -804,7 +803,7 @@ export default function HomePage() {
                             {
                               name: "James Thompson",
                               role: "Real Estate Broker",
-                              text: "Working with KW Chief Media has streamlined my entire marketing process. The results speak for themselves.",
+                              text: "Working with KW Gig Economya has streamlined my entire marketing process. The results speak for themselves.",
                             },
                             {
                               name: "Lisa Park",
@@ -903,13 +902,6 @@ export default function HomePage() {
                 >
                   Explore All Vendors
                   <ArrowRight className="ml-4 h-6 w-6" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="px-10 py-6 text-xl font-bold border-3 border-white/40 hover:bg-white/10 transition-all duration-300 hover:scale-105 w-full rounded-md bg-black/40 text-white backdrop-blur-sm"
-                >
-                  Start Free Trial
                 </Button>
               </div>
             </div>

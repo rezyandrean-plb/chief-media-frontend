@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/contexts/auth-context"
 import {
   Camera,
   Users,
@@ -277,6 +278,7 @@ export default function BecomeVendorPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   const router = useRouter()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -318,6 +320,22 @@ export default function BecomeVendorPage() {
       }
     }
   }, [])
+
+  // Auto-fill form with user data when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user && !submitted) {
+      const nameParts = user.name.split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
+      
+      setFormData(prev => ({
+        ...prev,
+        firstName,
+        lastName,
+        email: user.email
+      }))
+    }
+  }, [isAuthenticated, user, submitted])
 
   const scrollTimeline = (direction: "left" | "right") => {
     if (timelineRef.current) {
@@ -667,7 +685,38 @@ export default function BecomeVendorPage() {
           <div className="grid lg:grid-cols-5 gap-16 items-start">
             {/* Left Side - Application Form or Success State */}
             <div className="lg:col-span-3">
-              {submitted ? (
+              {!isAuthenticated && !isLoading ? (
+                <div className="relative">
+                  {/* Login Overlay */}
+                  <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+                    <div className="text-center p-8 max-w-md">
+                      <h3 className="text-2xl font-bold text-slate-950 mb-4">
+                        Please login to enquiry
+                      </h3>
+                      <p className="text-slate-950/80 mb-8 text-lg">
+                        We need to verify you already registered into our website
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button 
+                          onClick={() => router.push('/login')}
+                          className="bg-[#03809C] hover:bg-[#03809C]/90 text-white px-6 py-3 rounded-lg font-semibold"
+                        >
+                          Login
+                        </Button>
+                        <Button 
+                          onClick={() => router.push('/signup')}
+                          variant="outline"
+                          className="border-[#03809C] text-[#03809C] hover:bg-[#03809C] hover:text-white px-6 py-3 rounded-lg font-semibold"
+                        >
+                          Sign Up
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+              {/* Blurred form content behind overlay */}
+              <div className="opacity-30 pointer-events-none">
+                {submitted ? (
                 <div className="p-10 shadow-none rounded-md border-0 bg-popover-foreground flex flex-col items-center text-center">
                   <div className="mb-4 rounded-full bg-green-100 p-4">
                     <CheckCircle className="h-10 w-10 text-green-600" />
@@ -935,6 +984,281 @@ export default function BecomeVendorPage() {
                 )}
               </form>
               </>
+              )}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {submitted ? (
+                    <div className="p-10 shadow-none rounded-md border-0 bg-popover-foreground flex flex-col items-center text-center">
+                      <div className="mb-4 rounded-full bg-green-100 p-4">
+                        <CheckCircle className="h-10 w-10 text-green-600" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-background mb-2">Application Submitted</h3>
+                      <p className="text-background/80 mb-6 max-w-xl">
+                        Thank you for applying to join Chief Media's vendor network. We'll review your application and contact you within 24 hours.
+                        You'll be redirected to the homepage in 10 seconds.
+                      </p>
+                      <Button onClick={() => router.push('/')} className="bg-[#03809C] hover:bg-[#03809C]/90 text-white">Go to Homepage now</Button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Progress Indicator */}
+                      <div className="mb-8">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-sm font-medium text-slate-950">Step {currentStep} of 3</span>
+                          <span className="text-sm text-slate-600">{Math.round((currentStep / 3) * 100)}% Complete</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-[#F37521] h-2 rounded-full transition-all duration-300 ease-in-out"
+                            style={{ width: `${(currentStep / 3) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      <form className="space-y-8" onSubmit={handleSubmit}>
+                        {currentStep === 1 && (
+                          <div className="p-8 shadow-none rounded-md border-slate-950 border-0 px-7 py-9 bg-popover-foreground">
+                            <div className="flex items-center mb-6">
+                              <h3 className="text-xl font-bold text-background">Personal Information</h3>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-3 mb-4">
+                              <div className="group">
+                                <label className="block text-sm mb-2 flex items-center font-medium text-background">
+                                  First name *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={formData.firstName}
+                                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 text-background placeholder:text-gray-400 placeholder:font-medium"
+                                  placeholder="John"
+                                />
+                              </div>
+                              <div className="group">
+                                <label className="block text-sm mb-2 flex items-center font-medium text-background">
+                                  Last name *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={formData.lastName}
+                                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 placeholder:text-gray-400 placeholder:font-medium text-background"
+                                  placeholder="Smith"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-3 mb-4">
+                              <div className="group">
+                                <label className="block text-sm mb-2 flex items-center font-medium text-background">
+                                  Email address *
+                                </label>
+                                <input
+                                  type="email"
+                                  value={formData.email}
+                                  onChange={(e) => handleInputChange("email", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 rounded-md py-2 border text-sm border-slate-400 placeholder:text-gray-400 placeholder:font-medium text-background"
+                                  placeholder="john@example.com"
+                                />
+                              </div>
+                              <div className="group">
+                                <label className="block text-sm mb-2 flex items-center font-medium text-background">
+                                  Phone number *
+                                </label>
+                                <input
+                                  type="tel"
+                                  value={formData.phone}
+                                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 placeholder:text-gray-400 placeholder:font-medium text-background"
+                                  placeholder="(555) 123-4567"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-3">
+                              <div className="group">
+                                <label className="block text-sm mb-2 flex items-center font-medium text-background">
+                                  Address *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={formData.address || ""}
+                                  onChange={(e) => handleInputChange("address", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 rounded-md py-2 border text-sm border-slate-400 placeholder:text-gray-400 placeholder:font-medium text-background"
+                                  placeholder="123 Main St, City, State 12345"
+                                />
+                              </div>
+                              <div className="group">
+                                <label className="block text-sm mb-2 flex items-center font-medium text-background">
+                                  LinkedIn Profile
+                                </label>
+                                <input
+                                  type="url"
+                                  value={formData.linkedin}
+                                  onChange={(e) => handleInputChange("linkedin", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 rounded-md py-2 border text-sm border-slate-400 placeholder:text-gray-400 placeholder:font-medium text-background"
+                                  placeholder="https://linkedin.com/in/yourprofile"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {currentStep === 2 && (
+                          <div className="p-8 shadow-none rounded-md border-slate-950 border-0 px-7 py-9 bg-popover-foreground">
+                            <h3 className="text-xl font-bold text-background mb-6">Business Information</h3>
+
+                            <div className="grid md:grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-2 text-background">Business/Company name</label>
+                                <input
+                                  type="text"
+                                  value={formData.businessName}
+                                  onChange={(e) => handleInputChange("businessName", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 text-background placeholder:text-gray-400 placeholder:font-medium"
+                                  placeholder="Your Photography LLC"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2 text-background">Years of experience *</label>
+                                <select
+                                  value={formData.experience}
+                                  onChange={(e) => handleInputChange("experience", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 text-background"
+                                >
+                                  <option value="">Select experience level</option>
+                                  <option value="1-2">1-2 years</option>
+                                  <option value="3-5">3-5 years</option>
+                                  <option value="6-10">6-10 years</option>
+                                  <option value="10+">10+ years</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-2 text-background">Primary service type *</label>
+                                <select
+                                  value={formData.serviceType}
+                                  onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 text-background"
+                                >
+                                  <option value="">Select service type</option>
+                                  <option value="photography">Real Estate Photography</option>
+                                  <option value="videography">Real Estate Videography</option>
+                                  <option value="drone">Drone & Aerial Services</option>
+                                  <option value="virtual-tours">3D Virtual Tours</option>
+                                  <option value="floor-plans">Floor Plans & Staging</option>
+                                  <option value="social-media">Social Media Management</option>
+                                  <option value="copywriting">Copywriting</option>
+                                  <option value="other">Other</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2 text-background">Service location *</label>
+                                <input
+                                  type="text"
+                                  value={formData.location}
+                                  onChange={(e) => handleInputChange("location", e.target.value)}
+                                  className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 text-background placeholder:text-gray-400 placeholder:font-medium"
+                                  placeholder="City, State"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {currentStep === 3 && (
+                          <div className="p-8 shadow-none rounded-md border-slate-950 border-0 px-7 py-9 bg-popover-foreground">
+                            <h3 className="text-xl font-bold text-background mb-4">Portfolio & Additional Information</h3>
+                            <div className="mb-4">
+                              <label className="block text-sm font-medium text-background mb-2">
+                                Portfolio website or samples
+                              </label>
+                              <input
+                                type="url"
+                                value={formData.portfolio}
+                                onChange={(e) => handleInputChange("portfolio", e.target.value)}
+                                className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 text-background placeholder:text-gray-400 placeholder:font-medium"
+                                placeholder="https://yourportfolio.com"
+                              />
+                            </div>
+                            <div className="mb-6">
+                              <label className="block text-sm font-medium text-background mb-2">Tell us about yourself *</label>
+                              <textarea
+                                value={formData.description}
+                                onChange={(e) => handleInputChange("description", e.target.value)}
+                                rows={4}
+                                className="w-full px-4 focus:border-[#03809C] focus:outline-none focus:ring-4 focus:ring-[#03809C]/10 transition-all duration-300 group-hover:border-gray-300 py-2 rounded-md border text-sm border-slate-400 text-background placeholder:text-gray-400 placeholder:font-medium resize-none"
+                                placeholder="Describe your experience, equipment, specialties, and what makes you unique as a vendor..."
+                              />
+                            </div>
+                            <div className="flex items-start space-x-3">
+                              <input
+                                type="checkbox"
+                                id="terms"
+                                checked={formData.agreedToTerms}
+                                onChange={(e) => handleInputChange("agreedToTerms", e.target.checked)}
+                                className="mt-1 h-4 w-4 text-[#03809C] focus:ring-[#03809C] border-gray-300 rounded"
+                              />
+                              <label htmlFor="terms" className="text-sm text-background">
+                                I agree to the Terms of Service and Privacy Policy, and I'm interested in receiving updates
+                                about vendor opportunities.
+                              </label>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between">
+                          {currentStep > 1 && (
+                            <Button
+                              type="button"
+                              onClick={prevStep}
+                              className="px-6 py-3 font-semibold transition-all duration-300 bg-gray-500 hover:bg-gray-600 text-white hover:shadow-lg rounded-md"
+                            >
+                              Previous
+                            </Button>
+                          )}
+
+                          {currentStep < 3 ? (
+                            <Button
+                              type="button"
+                              onClick={nextStep}
+                              disabled={!isStepValid(currentStep)}
+                              className={`px-6 py-3 font-semibold transition-all duration-300 rounded-md ${currentStep === 1 ? "ml-auto" : ""} ${
+                                !isStepValid(currentStep)
+                                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                  : "bg-[#03809C] hover:bg-[#03809C]/90 text-white hover:shadow-lg"
+                              }`}
+                            >
+                              Next Step
+                            </Button>
+                          ) : (
+                            <Button
+                              type="submit"
+                              disabled={!isStepValid(currentStep)}
+                              className={`px-6 py-3 font-semibold transition-all duration-300 rounded-md ${
+                                !isStepValid(currentStep)
+                                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                  : "bg-[#F37521] hover:bg-[#F37521]/90 text-white hover:shadow-lg"
+                              }`}
+                            >
+                              Submit Application
+                            </Button>
+                          )}
+                        </div>
+
+                        {currentStep === 3 && (
+                          <p className="text-sm text-gray-600 text-center">
+                            After submission, we'll review your application and contact you within 24 hours with next steps.
+                          </p>
+                        )}
+                      </form>
+                    </>
+                  )}
+                </>
               )}
             </div>
 

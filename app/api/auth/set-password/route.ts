@@ -1,4 +1,5 @@
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
 
 		const now = new Date()
 		const v = await prisma.verificationToken.findUnique({ where: { token } })
-		if (!v || v.type !== 'set_password' || v.usedAt || v.expiresAt < now) {
+		if (!v || (v.type !== 'set_password' && v.type !== 'reset_password') || v.usedAt || v.expiresAt < now) {
 			return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 })
 		}
 
