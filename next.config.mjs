@@ -9,6 +9,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    outputFileTracingIncludes: {
+      "/app/api": ["./node_modules/.prisma/client"],
+    },
+  },
 }
 
 export default nextConfig
