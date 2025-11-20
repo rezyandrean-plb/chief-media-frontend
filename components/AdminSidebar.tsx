@@ -46,6 +46,16 @@ const navigation: ReadonlyArray<NavItem> = [
     ]
   },
   {
+    name: 'Studio',
+    href: '/admin/studio',
+    icon: Building2,
+    current: false,
+    children: [
+      { name: 'Manage Studio', href: '/admin/studio' },
+      { name: 'Manage Booking', href: '/admin/studio-bookings' }
+    ]
+  },
+  {
     name: 'Analytics',
     href: '/admin/analytics',
     icon: BarChart3,
@@ -98,7 +108,7 @@ export default function AdminSidebar() {
             className={cn(
               'w-full justify-between text-left',
               isActive
-                ? 'bg-[#B40101] text-white hover:bg-[#e0651a]'
+                ? 'bg-[#03809C] text-white hover:bg-[#026B7A]'
                 : 'text-gray-700 hover:bg-gray-100'
             )}
             onClick={() => toggleGroup(item.name)}
@@ -125,7 +135,7 @@ export default function AdminSidebar() {
                     className={cn(
                       'w-full justify-start text-left',
                       isChildActive
-                        ? 'bg-[#B40101] text-white hover:bg-[#e0651a]'
+                        ? 'bg-[#03809C] text-white hover:bg-[#026B7A]'
                         : 'text-gray-700 hover:bg-gray-100'
                     )}
                     onClick={() => handleNavigation(child.href)}
@@ -147,7 +157,7 @@ export default function AdminSidebar() {
         className={cn(
           'w-full justify-start text-left',
           isActive
-            ? 'bg-[#B40101] text-white hover:bg-[#e0651a]'
+            ? 'bg-[#03809C] text-white hover:bg-[#026B7A]'
             : 'text-gray-700 hover:bg-gray-100'
         )}
         onClick={() => handleNavigation(item.href)}
@@ -240,7 +250,7 @@ export default function AdminSidebar() {
           {/* User info and logout */}
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center mb-3">
-              <div className="h-8 w-8 rounded-full bg-[#B40101] flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-[#03809C] flex items-center justify-center">
                 <span className="text-white text-sm font-medium">{(adminUser?.email?.[0] || 'A').toUpperCase()}</span>
               </div>
               <div className="ml-3">

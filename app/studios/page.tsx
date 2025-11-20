@@ -1,9 +1,48 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useMemo, useState, type MouseEvent } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Camera, Wifi, Car, Coffee, Zap, Building2, Calendar, X } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+
+type StudioCardData = {
+  id: string
+  name: string
+  type: string
+  rating: number
+  reviews: number
+  location: string
+  hourlyRate: number
+  image: string
+  amenities: string[]
+  size: string
+  capacity: number
+  availability: string
+  featured?: boolean
+}
+
+type ApiStudio = {
+  id: string
+  name: string
+  location: string
+  hourlyRate: number
+  description?: string | null
+  capacity?: number | null
+  photos?: string[] | null
+  amenities?: string[] | null
+  size?: string | null
+  status?: string | null
+}
 
 const studioTypes = [
   {
@@ -32,9 +71,9 @@ const studioTypes = [
   },
 ]
 
-const featuredStudios = [
+const featuredStudios: StudioCardData[] = [
   {
-    id: 1,
+    id: "featured-1",
     name: "Luxe Media Studio",
     type: "photography",
     rating: 4.9,
@@ -49,7 +88,7 @@ const featuredStudios = [
     featured: true,
   },
   {
-    id: 2,
+    id: "featured-2",
     name: "Skyline Video Productions",
     type: "video",
     rating: 4.8,
@@ -88,6 +127,13 @@ const amenityIcons = {
 }
 
 export default function StudiosPage() {
+  const router = useRouter()
+  const { isAuthenticated } = useAuth()
+  const [studios, setStudios] = useState<StudioCardData[]>(featuredStudios)
+  const [isLoadingStudios, setIsLoadingStudios] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const [pendingRoute, setPendingRoute] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedType, setSelectedType] = useState("all")
   const [selectedLocation, setSelectedLocation] = useState("all")
@@ -96,6 +142,20 @@ export default function StudiosPage() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
   const [showCancellationPolicy, setShowCancellationPolicy] = useState(false)
   const [showTermsConditions, setShowTermsConditions] = useState(false)
+  const handleProtectedNavigation = (event: MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (isAuthenticated) {
+      return
+    }
+
+    event.preventDefault()
+    setPendingRoute(path)
+    setShowLoginPrompt(true)
+  }
+
+  const handleLoginRedirect = () => {
+    setShowLoginPrompt(false)
+    router.push("/login")
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -106,25 +166,100 @@ export default function StudiosPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const filteredStudios = featuredStudios.filter((studio) => {
-    const matchesSearch =
-      studio.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      studio.amenities.some((amenity) => amenity.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesType = selectedType === "all" || studio.type === selectedType
-    const matchesLocation = selectedLocation === "all" || studio.location.includes(selectedLocation)
-    return matchesSearch && matchesType && matchesLocation
-  })
+  useEffect(() => {
+    let isMounted = true
+    const controller = new AbortController()
+
+    const normalizeStudio = (studio: ApiStudio): StudioCardData => {
+      const amenities = Array.isArray(studio.amenities) ? studio.amenities.filter(Boolean) : []
+      const photos = Array.isArray(studio.photos) ? studio.photos.filter(Boolean) : []
+
+      return {
+        id: studio.id,
+        name: studio.name,
+        type: "multipurpose",
+        rating: 0,
+        reviews: 0,
+        location: studio.location,
+        hourlyRate: studio.hourlyRate,
+        image: photos[0] || "/modern-photography-studio-with-professional-lighti.png",
+        amenities,
+        size: studio.size || "Contact for details",
+        capacity: studio.capacity ?? 0,
+        availability:
+          studio.status === "maintenance"
+            ? "Under Maintenance"
+            : studio.status === "inactive"
+              ? "Unavailable"
+              : "Available",
+      }
+    }
+
+    const fetchStudios = async () => {
+      try {
+        setIsLoadingStudios(true)
+        setFetchError(null)
+
+        const response = await fetch("/api/studios", { signal: controller.signal })
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch studios")
+        }
+
+        const payload = await response.json()
+        if (!isMounted) return
+
+        if (Array.isArray(payload?.data) && payload.data.length > 0) {
+          setStudios(payload.data.map((studio: ApiStudio) => normalizeStudio(studio)))
+        } else {
+          setStudios(featuredStudios)
+        }
+      } catch (error) {
+        if ((error as DOMException).name === "AbortError") return
+        console.error("[StudiosPage] Error loading studios:", error)
+
+        if (isMounted) {
+          setFetchError("Unable to load the latest studios. Showing featured spaces instead.")
+          setStudios(featuredStudios)
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingStudios(false)
+        }
+      }
+    }
+
+    fetchStudios()
+
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
+  }, [])
+
+  const filteredStudios = useMemo(() => {
+    return studios.filter((studio) => {
+      const amenities = studio.amenities ?? []
+      const matchesSearch =
+        studio.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        amenities.some((amenity) => amenity.toLowerCase().includes(searchQuery.toLowerCase()))
+      const matchesType = selectedType === "all" || studio.type === selectedType
+      const matchesLocation =
+        selectedLocation === "all" || studio.location.toLowerCase().includes(selectedLocation.toLowerCase())
+      return matchesSearch && matchesType && matchesLocation
+    })
+  }, [searchQuery, selectedLocation, selectedType, studios])
 
   const sortedStudios = [...filteredStudios].sort((a, b) => {
     switch (sortBy) {
       case "rating":
-        return b.rating - a.rating
+        return (b.rating ?? 0) - (a.rating ?? 0)
       case "price-low":
         return a.hourlyRate - b.hourlyRate
       case "price-high":
         return b.hourlyRate - a.hourlyRate
       case "reviews":
-        return b.reviews - a.reviews
+        return (b.reviews ?? 0) - (a.reviews ?? 0)
       default:
         return 0
     }
@@ -182,6 +317,7 @@ export default function StudiosPage() {
           </div>
         </div>
       </section>
+      {/* Discover Studio Section */}
       <section className="py-20">
         <div className="w-full px-[7vw]">
           <div className="text-center mb-16">
@@ -199,92 +335,98 @@ export default function StudiosPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12">
-            {/* Flexi Rental Card */}
-            <div className="group relative overflow-hidden rounded-md bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-              <div className="relative h-96 overflow-hidden">
-                <img
-                  src="/modern-photography-studio-with-professional-lighti.png"
-                  alt="Professional photography studio with lighting equipment"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+          <div className="mt-10">
+            {isLoadingStudios ? (
+              <div className="flex items-center justify-center rounded-xl border border-dashed border-[#273F4F]/20 p-12 text-[#273F4F]/70">
+                Loading latest studios…
+              </div>
+            ) : sortedStudios.length > 0 ? (
+              <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+                {sortedStudios.map((studio) => (
+                  <div
+                    key={studio.id}
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-[#273F4F]/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <div className="relative h-56 overflow-hidden">
+                      <img
+                        src={studio.image}
+                        alt={studio.name}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute left-4 top-4 rounded-full bg-white/90 px-4 py-1 text-sm font-medium text-[#273F4F]">
+                        {studio.availability}
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-col gap-4 p-6">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xl font-semibold text-[#273F4F]">{studio.name}</h3>
+                          <span className="text-sm font-medium text-[#03809C]">${studio.hourlyRate}/hr</span>
+                        </div>
+                        <p className="text-sm text-[#273F4F]/70">{studio.location}</p>
+                      </div>
 
-                {/* Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                  <div className="flex items-center mb-4">
-                    <div>
-                      <h3 className="text-2xl font-bold">North Studio </h3>
+                      <div className="flex flex-wrap gap-3 text-sm text-[#273F4F]/80">
+                        <span>Capacity: {studio.capacity || "—"}</span>
+                        <span>Size: {studio.size}</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {(studio.amenities ?? []).slice(0, 4).map((amenity) => {
+                          const Icon = amenityIcons[amenity as keyof typeof amenityIcons] ?? Building2
+                          return (
+                            <span
+                              key={`${studio.id}-${amenity}`}
+                              className="inline-flex items-center gap-2 rounded-full bg-[#273F4F]/5 px-3 py-1 text-xs font-medium text-[#273F4F]"
+                            >
+                              <Icon className="h-3.5 w-3.5" />
+                              {amenity}
+                            </span>
+                          )
+                        })}
+                      </div>
+
+                      <div className="mt-auto flex items-center justify-between">
+                        <Link
+                          href={`/studios/${studio.id}`}
+                          className="text-sm font-semibold text-[#03809C] hover:underline"
+                          onClick={(event) => handleProtectedNavigation(event, `/studios/${studio.id}`)}
+                        >
+                          View details →
+                        </Link>
+                        <Button className="bg-[#F37521] text-white hover:bg-[#F37521]/90" asChild>
+                          <Link
+                            href={`/studios/${studio.id}`}
+                            onClick={(event) => handleProtectedNavigation(event, `/studios/${studio.id}`)}
+                          >
+                            Book studio
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
-
-                  <p className="text-lg mb-6 text-white/90">Need a flexi space by the hour/day? Book here.</p>
-
-                  <Button
-                    className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 transition-all duration-300 px-6 py-3 rounded-md"
-                    asChild
-                  >
-                    <Link href="/studios/flexi">
-                      Book Now
-                      <span className="ml-2">→</span>
-                    </Link>
-                  </Button>
-                </div>
+                ))}
               </div>
-            </div>
-
-            {/* Fixed Rental Card */}
-            <div className="group relative overflow-hidden rounded-md bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-              <div className="relative h-96 overflow-hidden">
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/alexander-dummer-aS4Duj2j7r4-unsplash%20%281%29.jpg-OyXrJcDVchT7Sg3CPX8DT3l8BZ9Zmj.jpeg"
-                  alt="Professional photography studio with lighting equipment and backdrop"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-
-                {/* Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                  <div className="flex items-center mb-4">
-                    <div>
-                      <h3 className="text-2xl font-bold">East Studio </h3>
-                    </div>
-                  </div>
-
-                  <p className="text-lg mb-6 text-white/90">Need commercial space to expand your business?</p>
-
-                  <Button
-                    className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 transition-all duration-300 px-6 py-3 rounded-md"
-                    asChild
-                  >
-                    <Link href="/studios/fixed">
-                      Book Now
-                      <span className="ml-2">→</span>
-                    </Link>
-                  </Button>
-                </div>
+            ) : (
+              <div className="text-center py-12">
+                <Building2 className="h-12 w-12 text-[#273F4F]/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2 text-[#273F4F]">No studios found</h3>
+                <p className="text-[#273F4F]/70">Try adjusting your search criteria or browse all types</p>
+                <Button
+                  variant="outline"
+                  className="mt-4 bg-transparent border-[#03809C] text-[#03809C] hover:bg-[#03809C] hover:text-white"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setSelectedType("all")
+                    setSelectedLocation("all")
+                  }}
+                >
+                  Clear Filters
+                </Button>
               </div>
-            </div>
+            )}
           </div>
 
-          {sortedStudios.length === 0 && (
-            <div className="text-center py-12">
-              <Building2 className="h-12 w-12 text-[#273F4F]/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2 text-[#273F4F]">No studios found</h3>
-              <p className="text-[#273F4F]/70">Try adjusting your search criteria or browse all types</p>
-              <Button
-                variant="outline"
-                className="mt-4 bg-transparent border-[#03809C] text-[#03809C] hover:bg-[#03809C] hover:text-white"
-                onClick={() => {
-                  setSearchQuery("")
-                  setSelectedType("all")
-                  setSelectedLocation("all")
-                }}
-              >
-                Clear Filters
-              </Button>
-            </div>
-          )}
         </div>
       </section>
       <section className="py-20 bg-gray-50">
@@ -533,6 +675,32 @@ export default function StudiosPage() {
           </div>
         </div>
       )}
+      <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Login required</DialogTitle>
+            <DialogDescription>
+              You need to be logged in to view studio details or request a booking. Logging in lets us keep your requests
+              and availability in sync.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-sm text-[#273F4F]/80">
+            <p>
+              {pendingRoute
+                ? "After you log in, you can come right back and continue with this studio."
+                : "Sign in to continue exploring studio availability and bookings."}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLoginPrompt(false)}>
+              Stay on this page
+            </Button>
+            <Button onClick={handleLoginRedirect} className="bg-[#03809C] text-white hover:bg-[#03809C]/90">
+              Go to login
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -89,6 +89,24 @@ model VendorEnquiry {
   @@map("vendor_enquiries")
 }
 
+model Studio {
+  id          String    @id
+  name        String    // Required
+  location    String    // Required
+  hourlyRate  Float     // Required
+  description String?
+  capacity    Int?
+  photos      Json?     // Array of strings
+  equipment   Json?     // Array of Equipment objects
+  availability Json?    // Array of Availability objects
+  amenities   Json?     // Array of strings
+  size        String?
+  status      String?   @default("active") // "active" | "maintenance" | "inactive"
+  createdAt   DateTime  @default(now())
+
+  @@map("studios")
+}
+
 enum UserRole {
   client
   vendor
